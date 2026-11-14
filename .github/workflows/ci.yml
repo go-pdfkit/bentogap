@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GOWORK: "off"
+  CGO_ENABLED: "0"
+
+jobs:
+  test:
+    name: Build + test + exact 100% coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # go.mod declares `go 1.27.4`, and GOTOOLCHAIN is left alone so a pin
+      # below that would fail loudly rather than be swapped out silently.
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.4'
+          check-latest: true
+          cache: true
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt would change these files"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Test with coverage
+        run: go test -covermode=set -coverprofile=coverage.out ./...
+
+      # ⛔ THE GATE IS THE POINT OF THIS REPOSITORY, APPLIED TO ITSELF. This
+      # command exists because a count nobody re-runs goes stale while still
+      # reading like a measurement; a suite that does not cover its own report
+      # would be the same defect one level down.
+      # ⛔ covblocks RATHER THAN awk. The fleet's rule is that a verdict comes
+      # out of a program with a test, not out of a pipeline — and the first
+      # draft of this file reached for `go tool cover -func | awk` anyway,
+      # which is the habit the rule exists to catch. covblocks is the tool
+      # that already answers this question everywhere else, and it names the
+      # uncovered BLOCKS rather than only a percentage.
+      - name: Assert exact 100% statement coverage
+        run: |
+          go install github.com/go-fleettools/fleettools/cmd/covblocks@latest
+          covblocks --max 0 coverage.out
+
+      # ⛔ THE INSTRUMENT HAS TO RUN, not merely compile and pass its tests.
+      # Its whole claim is a number it prints, and a build that cannot print
+      # one is the failure this repository was created to stop being possible.
+      # ⛔ NOT "111 judged", WHICH WOULD BREAK ON A CORRECT CHANGE. The first
+      # draft pinned the number here, so BentoPDF adding a tool would redden
+      # this lane with every test green — a gate that fails on legitimate work
+      # is one somebody deletes. The DENOMINATOR is pinned by the suite
+      # (TestTheSectionsAreAsLongAsTheyWereRead); what this lane asserts is
+      # that a complete report was actually printed, whatever its size.
+      - name: Run it, and require a complete report
+        run: |
+          go run . > report.txt
+          if ! grep -q "judged, 0 not" report.txt; then
+            echo "::error::the report did not judge every tool it read"
+            tail -5 report.txt
+            exit 1
+          fi
+          tail -1 report.txt
+
+      - name: Cross-compile
+        run: |
+          for arch in amd64 arm64 riscv64 s390x; do
+            GOOS=linux GOARCH=$arch go build ./...
+          done
+          GOOS=darwin  GOARCH=arm64 go build ./...
+          GOOS=windows GOARCH=amd64 go build ./...
+
+  vulns:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.4'
+          check-latest: true
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
