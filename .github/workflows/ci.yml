@@ -47,23 +47,30 @@ jobs:
       # command exists because a count nobody re-runs goes stale while still
       # reading like a measurement; a suite that does not cover its own report
       # would be the same defect one level down.
+      # ⛔ covblocks RATHER THAN awk. The fleet's rule is that a verdict comes
+      # out of a program with a test, not out of a pipeline — and the first
+      # draft of this file reached for `go tool cover -func | awk` anyway,
+      # which is the habit the rule exists to catch. covblocks is the tool
+      # that already answers this question everywhere else, and it names the
+      # uncovered BLOCKS rather than only a percentage.
       - name: Assert exact 100% statement coverage
         run: |
-          below=$(go tool cover -func=coverage.out | awk '$3 != "100.0%"')
-          if [ -n "$below" ]; then
-            echo "::error::coverage below 100%"
-            echo "$below"
-            exit 1
-          fi
-          echo "all statements covered (100.0%)"
+          go install github.com/go-fleettools/fleettools/cmd/covblocks@latest
+          covblocks --max 0 coverage.out
 
       # ⛔ THE INSTRUMENT HAS TO RUN, not merely compile and pass its tests.
       # Its whole claim is a number it prints, and a build that cannot print
       # one is the failure this repository was created to stop being possible.
-      - name: Run it, and require the denominator
+      # ⛔ NOT "111 judged", WHICH WOULD BREAK ON A CORRECT CHANGE. The first
+      # draft pinned the number here, so BentoPDF adding a tool would redden
+      # this lane with every test green — a gate that fails on legitimate work
+      # is one somebody deletes. The DENOMINATOR is pinned by the suite
+      # (TestTheSectionsAreAsLongAsTheyWereRead); what this lane asserts is
+      # that a complete report was actually printed, whatever its size.
+      - name: Run it, and require a complete report
         run: |
           go run . > report.txt
-          if ! grep -q "111 judged, 0 not" report.txt; then
+          if ! grep -q "judged, 0 not" report.txt; then
             echo "::error::the report did not judge every tool it read"
             tail -5 report.txt
             exit 1
