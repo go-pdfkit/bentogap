@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GOWORK: "off"
+  CGO_ENABLED: "0"
+
+jobs:
+  test:
+    name: Build + test + exact 100% coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # go.mod declares `go 1.27.4`, and GOTOOLCHAIN is left alone so a pin
+      # below that would fail loudly rather than be swapped out silently.
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.4'
+          check-latest: true
+          cache: true
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt would change these files"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Test with coverage
+        run: go test -covermode=set -coverprofile=coverage.out ./...
+
+      # ⛔ THE GATE IS THE POINT OF THIS REPOSITORY, APPLIED TO ITSELF. This
+      # command exists because a count nobody re-runs goes stale while still
+      # reading like a measurement; a suite that does not cover its own report
+      # would be the same defect one level down.
+      - name: Assert exact 100% statement coverage
+        run: |
+          below=$(go tool cover -func=coverage.out | awk '$3 != "100.0%"')
+          if [ -n "$below" ]; then
+            echo "::error::coverage below 100%"
+            echo "$below"
+            exit 1
+          fi
+          echo "all statements covered (100.0%)"
+
+      # ⛔ THE INSTRUMENT HAS TO RUN, not merely compile and pass its tests.
+      # Its whole claim is a number it prints, and a build that cannot print
+      # one is the failure this repository was created to stop being possible.
+      - name: Run it, and require the denominator
+        run: |
+          go run . > report.txt
+          if ! grep -q "111 judged, 0 not" report.txt; then
+            echo "::error::the report did not judge every tool it read"
+            tail -5 report.txt
+            exit 1
+          fi
+          tail -1 report.txt
+
+      - name: Cross-compile
+        run: |
+          for arch in amd64 arm64 riscv64 s390x; do
+            GOOS=linux GOARCH=$arch go build ./...
+          done
+          GOOS=darwin  GOARCH=arm64 go build ./...
+          GOOS=windows GOARCH=amd64 go build ./...
+
+  vulns:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.4'
+          check-latest: true
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
