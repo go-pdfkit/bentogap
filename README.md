@@ -20,10 +20,10 @@ That is the failure this tool was built to detect, happening to the tool itself.
 | verdict | n | what it means |
 |---|---:|---|
 | **have** | 74 | the workbench does it, under its own name |
-| **partly** | 5 | it does some of it, and the gap is worth naming |
+| **partly** | 6 | it does some of it, and the gap is worth naming |
 | **elsewhere** | 20 | the fleet already does it and the ribbon does not |
 | **declined** | 0 | not a gap: a decision, said out loud |
-| **MISSING** | 12 | it does not exist anywhere in the fleet |
+| **MISSING** | 11 | it does not exist anywhere in the fleet |
 | | **111** | every row judged, none skipped |
 
 ## What makes it an inventory rather than a list of opinions

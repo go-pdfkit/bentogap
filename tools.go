@@ -252,7 +252,7 @@ var tools = []tool{
 	{"to pdf", "ODS to PDF", elsewhere, "go-odf reads it into richdoc; " + toPDFnoSuffix},
 	{"to pdf", "ODP to PDF", elsewhere, "go-odf reads it into richdoc; " + toPDFnoSuffix},
 	{"to pdf", "ODG to PDF", elsewhere, "go-odf reads it into richdoc; " + toPDFnoSuffix},
-	{"to pdf", "RTF to PDF", missing, "⛔ nothing in the fleet reads RTF — checked across go-richdoc, go-docutils, go-ooxml and go-odf"},
+	{"to pdf", "RTF to PDF", partly, "`doc2pdf report.rtf` (go-pdfkit/doc2pdf v0.3.0, reading through go-richdoc/rtf v0.1.2) converts it, keeping headings, lists, tables, links, footnotes, PNG and JPEG pictures, bold, italic, strike and alignment. ⛔ The gap: BentoPDF goes through LibreOffice and keeps the LAYOUT, while the richdoc model (go-richdoc v0.10.0) has no place for font size, colour, underline, fonts, indents, headers or footers, so those are dropped. Input is bounded (16 MiB for RTF, `--max-input` to change it)"},
 	{"to pdf", "CSV to PDF", elsewhere, "go-richdoc/data reads CSV into richdoc; " + toPDF},
 	{"to pdf", "Markdown to PDF", elsewhere, "go-richdoc/markdown reads it into richdoc; " + toPDF},
 	{"to pdf", "Text to PDF", elsewhere, "go-richdoc/data reads plain text into richdoc; " + toPDF},
