@@ -272,14 +272,15 @@ var tools = []tool{
 	// What does exist: go-ooxml/opc reads the OPC container "behind docx, xlsx,
 	// pptx and xps" — its own description — so the PACKAGE can be opened, and
 	// the spec (ECMA-388) is in the bibliography at
-	// ~/Documents/VCS/GIT/localhost/specs-openxps. Nothing turns XPS markup
-	// into a page. A container reader is not a converter, the same way go-odf
+	// ~/Documents/VCS/GIT/localhost/specs-openxps. (HISTORY: until doc2pdf
+	// v0.4.0 nothing turned XPS markup into a page; now it does and the row
+	// is `have`.) A container reader is not a converter, the same way go-odf
 	// reading ODF is not ODF to PDF.
 	//
 	// An `elsewhere` naming something that is not there is worse than a
 	// `missing`: it understates the gap, and it understates it in the
 	// direction that looks like progress.
-	{"to pdf", "XPS to PDF", missing, "go-ooxml/opc reads the OPC container behind xps, and nothing turns the markup into a page; `convert.XPSToPDF` does not exist in v0.16.0 or any earlier tag, which is what this row used to cite; the spec is ECMA-388"},
+	{"to pdf", "XPS to PDF", have, "`doc2pdf scan.xps` and `scan.oxps` (go-pdfkit/doc2pdf v0.4.0, its own `xps` package reading the OPC package per ECMA-388): a vector PDF with selectable text and embedded fonts; what it cannot draw (VisualBrush, JPEG XR, TrueType collections) is counted and printed as `not drawn`. WOFF fonts are refused (ECMA-388 section 9.1.7), one `MaxMemory` budget (160 MiB) bounds a conversion, and the bytes API buffers the PDF"},
 	{"to pdf", "Email to PDF", elsewhere, "go-richdoc/email reads it into richdoc; " + toPDF},
 	{"to pdf", "Pages to PDF", missing, asked + "; no reader for Apple's format"},
 	{"to pdf", "WPD to PDF", missing, asked + " for \"wpd\": not one mention in thirty repositories"},

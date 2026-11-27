@@ -15,15 +15,15 @@ That is the failure this tool was built to detect, happening to the tool itself.
 
 ⛔ **So the numbers below are stamped, and they are not the authority — `go run .` is.** If this file and the program disagree, the program is right and this file is the bug.
 
-## The count, 2026-11-22
+## The count, 2026-11-27
 
 | verdict | n | what it means |
 |---|---:|---|
-| **have** | 75 | the workbench does it, under its own name |
+| **have** | 76 | the workbench does it, under its own name |
 | **partly** | 6 | it does some of it, and the gap is worth naming |
 | **elsewhere** | 20 | the fleet already does it and the ribbon does not |
 | **declined** | 0 | not a gap: a decision, said out loud |
-| **MISSING** | 10 | it does not exist anywhere in the fleet |
+| **MISSING** | 9 | it does not exist anywhere in the fleet |
 | | **111** | every row judged, none skipped |
 
 ## What makes it an inventory rather than a list of opinions
